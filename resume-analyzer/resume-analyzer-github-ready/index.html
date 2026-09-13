@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Resume Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+  <style>
+    /* reset & base */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f2f6fc;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.8rem;
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* main card – premium glassmorphism */
+    .analyzer-card {
+      max-width: 920px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 32px;
+      padding: 2.5rem 3rem;
+      box-shadow: 
+        0 30px 50px -20px rgba(0, 20, 40, 0.20),
+        0 12px 28px -8px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      transition: box-shadow 0.2s ease;
+    }
+
+    @media (max-width: 680px) {
+      .analyzer-card {
+        padding: 1.8rem 1.4rem;
+        border-radius: 24px;
+      }
+    }
+
+    /* header */
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.3rem;
+      flex-wrap: wrap;
+    }
+
+    .card-header h1 {
+      font-weight: 600;
+      font-size: 1.9rem;
+      letter-spacing: -0.02em;
+      color: #0b1f3b;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-header h1 small {
+      font-weight: 400;
+      font-size: 0.9rem;
+      color: #4c6b8a;
+      background: #eef3fb;
+      padding: 0.15rem 0.9rem;
+      border-radius: 30px;
+      letter-spacing: 0.3px;
+      margin-left: 0.4rem;
+    }
+
+    .badge-premium {
+      background: linear-gradient(145deg, #1a5bbf, #0f3f8a);
+      color: white;
+      font-weight: 500;
+      font-size: 0.7rem;
+      padding: 0.25rem 1rem;
+      border-radius: 40px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(18, 67, 148, 0.25);
+      background: #154a9e;
+    }
+
+    .sub-headline {
+      color: #3b5779;
+      font-size: 0.95rem;
+      font-weight: 400;
+      margin-top: 0.25rem;
+      margin-bottom: 2rem;
+      border-left: 3px solid #1a5bbf;
+      padding-left: 1.1rem;
+      background: #f5f9ff;
+      border-radius: 0 6px 6px 0;
+      padding: 0.5rem 1.2rem;
+      background: #f8faff;
+      display: inline-block;
+    }
+
+    /* form */
+    .form-group {
+      margin-bottom: 1.7rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: #1d3452;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+
+    .form-group label .required {
+      color: #b22234;
+      font-weight: 600;
+      margin-left: 2px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.85rem 1.2rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      border: 1.5px solid #e3eaf2;
+      border-radius: 16px;
+      background: #ffffff;
+      transition: 0.2s;
+      color: #0b1f3b;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01);
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #1a5bbf;
+      box-shadow: 0 0 0 4px rgba(26, 91, 191, 0.10);
+      background: #ffffff;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 150px;
+      line-height: 1.6;
+    }
+
+    /* primary action */
+    .btn-analyze {
+      background: linear-gradient(145deg, #1a5bbf, #13458f);
+      color: white;
+      font-weight: 600;
+      font-size: 1.05rem;
+      padding: 0.9rem 2rem;
+      border: none;
+      border-radius: 40px;
+      width: 100%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 18px -6px rgba(26, 91, 191, 0.30);
+      letter-spacing: 0.2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-top: 0.3rem;
+    }
+
+    .btn-analyze:hover {
+      background: linear-gradient(145deg, #124b9e, #0e3a78);
+      box-shadow: 0 12px 28px -8px rgba(26, 91, 191, 0.45);
+      transform: scale(1.01);
+    }
+
+    .btn-analyze:active {
+      transform: scale(0.98);
+    }
+
+    /* result section */
+    .result-section {
+      margin-top: 2.4rem;
+      border-top: 1.5px solid #e9eff6;
+      padding-top: 1.8rem;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.9rem;
+      flex-wrap: wrap;
+    }
+
+    .result-header h3 {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #0b1f3b;
+      margin: 0;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .status-pill {
+      background: #edf3fc;
+      padding: 0.2rem 1.2rem;
+      border-radius: 40px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #1d4a7a;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .status-pill.ready {
+      background: #edf3fc;
+      color: #1d4a7a;
+    }
+    .status-pill.analyzing {
+      background: #e0e9fa;
+      color: #0f3f8a;
+      border-color: #b7cbe7;
+    }
+    .status-pill.done {
+      background: #e2f0e6;
+      color: #18653b;
+      border-color: #b2d6bf;
+    }
+    .status-pill.error {
+      background: #fce9e9;
+      color: #a12424;
+      border-color: #f0c8c8;
+    }
+
+    .output-panel {
+      background: #fafcff;
+      border-radius: 20px;
+      padding: 1.6rem 2rem;
+      border: 1px solid #e9eff6;
+      box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.01), 0 4px 12px rgba(0, 20, 40, 0.02);
+      min-height: 120px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: #162b44;
+      white-space: pre-wrap;
+      word-break: break-word;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .output-panel:empty::before {
+      content: "Analysis results will be displayed here";
+      color: #889eb9;
+      font-weight: 400;
+      opacity: 0.7;
+    }
+
+    .output-panel.loading-state {
+      background: #f4f9ff;
+      border-color: #c5d6f0;
+      color: #1d3b63;
+    }
+
+    .output-panel::-webkit-scrollbar {
+      width: 5px;
+    }
+    .output-panel::-webkit-scrollbar-track {
+      background: #eef3fa;
+      border-radius: 12px;
+    }
+    .output-panel::-webkit-scrollbar-thumb {
+      background: #b8cbe0;
+      border-radius: 12px;
+    }
+    .output-panel::-webkit-scrollbar-thumb:hover {
+      background: #9bb2ce;
+    }
+
+    .footer-note {
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: #60758f;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.8rem;
+      border-top: 1px solid #edf2f9;
+      padding-top: 1rem;
+      letter-spacing: 0.2px;
+    }
+
+    .footer-note span {
+      background: #f1f6fd;
+      padding: 0.15rem 0.8rem;
+      border-radius: 30px;
+    }
+
+    /* utility */
+    .text-muted {
+      color: #5f7693;
+    }
+    .mt-1 { margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+<div class="analyzer-card">
+
+  <!-- header -->
+  <div class="card-header">
+    <h1>
+      Resume Analyzer
+      <small>AI Powered</small>
+    </h1>
+    <span class="badge-premium">Premium</span>
+  </div>
+  <div class="sub-headline">
+    Paste resume text and target role for structured, actionable intelligence
+  </div>
+
+  <!-- form -->
+  <div class="form-group">
+    <label for="roleInput">Target Job Role <span class="required">*</span></label>
+    <input type="text" id="roleInput" placeholder="e.g. Product Designer, Data Scientist, Software Engineer" value="Software Engineer" />
+  </div>
+
+  <div class="form-group">
+    <label for="resumeInput">Resume Content <span class="required">*</span></label>
+    <textarea id="resumeInput" rows="8" placeholder="Paste the full text of your resume here...">Experienced software engineer with 6+ years in full-stack development. Led teams of 5, delivered microservices using Python, React, AWS. Strong background in system design, CI/CD, and agile practices.</textarea>
+  </div>
+
+  <button class="btn-analyze" onclick="analyzeResume()">
+    <span>Analyze Resume</span>
+  </button>
+
+  <!-- result panel -->
+  <div class="result-section">
+    <div class="result-header">
+      <h3>Analysis Output</h3>
+      <span id="statusBadge" class="status-pill ready">Ready</span>
+    </div>
+    <div id="outputPanel" class="output-panel">Analysis results will be displayed here</div>
+    <div class="footer-note">
+      <span>API key stays on the backend</span>
+      <span>v2.1</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const roleInput = document.getElementById('roleInput');
+    const resumeInput = document.getElementById('resumeInput');
+    const outputDiv = document.getElementById('outputPanel');
+    const statusBadge = document.getElementById('statusBadge');
+
+    // helper to set status
+    function setStatus(type, message) {
+      statusBadge.className = 'status-pill';
+      if (type === 'analyzing') {
+        statusBadge.classList.add('analyzing');
+        statusBadge.textContent = 'Analyzing';
+      } else if (type === 'done') {
+        statusBadge.classList.add('done');
+        statusBadge.textContent = 'Complete';
+      } else if (type === 'error') {
+        statusBadge.classList.add('error');
+        statusBadge.textContent = 'Error';
+      } else {
+        statusBadge.classList.add('ready');
+        statusBadge.textContent = 'Ready';
+      }
+    }
+
+    // set output with styling
+    function setOutput(content, isError = false, isLoading = false) {
+      outputDiv.classList.remove('loading-state');
+      outputDiv.style.background = '#fafcff';
+      outputDiv.style.borderColor = '#e9eff6';
+
+      if (isLoading) {
+        outputDiv.classList.add('loading-state');
+        outputDiv.style.background = '#f4f9ff';
+        outputDiv.style.borderColor = '#c5d6f0';
+        outputDiv.textContent = content || 'Processing request...';
+        return;
+      }
+
+      if (isError) {
+        outputDiv.style.background = '#fef6f6';
+        outputDiv.style.borderColor = '#f0d0d0';
+        outputDiv.textContent = content;
+        return;
+      }
+
+      // normal output
+      outputDiv.textContent = content;
+    }
+
+    window.analyzeResume = async function() {
+      const role = roleInput.value.trim();
+      const resume = resumeInput.value.trim();
+
+      // validation
+      if (!role || !resume) {
+        setOutput('Please fill in both the target role and resume content.', true);
+        setStatus('error');
+        return;
+      }
+
+      // set loading state
+      setOutput('Analyzing your resume with AI ...', false, true);
+      setStatus('analyzing');
+
+      try {
+        const response = await fetch('http://localhost:8000/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resume, role })
+        });
+
+        // handle non-ok response
+        if (!response.ok) {
+          let errorMsg = `Server error (${response.status})`;
+          try {
+            const errData = await response.json();
+            if (errData && errData.detail) errorMsg = errData.detail;
+            else if (errData && errData.message) errorMsg = errData.message;
+          } catch (_) {
+            // ignore
+          }
+          throw new Error(errorMsg);
+        }
+
+        const data = await response.json();
+        const resultText = data?.result?.trim() || 'Analysis complete — no additional insights returned.';
+
+        setOutput(resultText, false, false);
+        setStatus('done');
+
+      } catch (err) {
+        console.error('Analysis error:', err);
+        let userMsg = 'Unable to connect to the analysis service. Please ensure the backend is running on http://localhost:8000.';
+        if (err.message && err.message.includes('Failed to fetch')) {
+          userMsg = 'Backend server not reachable. Please start the server on port 8000.';
+        } else if (err.message) {
+          userMsg = err.message;
+        }
+        setOutput(userMsg, true);
+        setStatus('error');
+      }
+    };
+
+    // on load: set default placeholder if empty
+    if (!outputDiv.textContent || outputDiv.textContent.trim() === '') {
+      outputDiv.textContent = 'Analysis results will be displayed here';
+    }
+  })();
+</script>
+
+<!-- extra polish -->
+<style>
+  .output-panel:not(:empty) {
+    background: #fafcff;
+  }
+  .output-panel:empty {
+    background: transparent;
+    border: 1px dashed #d0ddec;
+  }
+  .output-panel:empty::before {
+    content: "Analysis results will be displayed here";
+    color: #889eb9;
+    opacity: 0.7;
+  }
+  /* hide pseudo when content exists */
+  .output-panel:not(:empty)::before {
+    display: none;
+  }
+  .output-panel.loading-state {
+    background: #f4f9ff !important;
+  }
+</style>
+</body>
+</html>
